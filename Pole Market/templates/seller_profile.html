@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="wb-container" style="margin-top: 28px; margin-bottom: 56px;">
+    <div style="margin-bottom: 18px;">
+        <a href="javascript:history.back()" style="color: #3a8fbc; text-decoration: none; font-size: 0.9rem; font-weight: 600;">← Назад</a>
+    </div>
+
+    <!-- Шапка публичного профиля продавца (только имя, аватар, рейтинг и счётчики — без телефона и почты) -->
+    <div style="background: linear-gradient(110deg, #252133 0%, #3d517e 60%, #3a8fbc 100%); border-radius: 20px; padding: 28px 32px; margin-bottom: 28px; color: #ffffff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 18px;">
+            {% if seller.avatar %}
+                <img src="{{ url_for('static', filename='uploads/' + seller.avatar) }}" style="width: 76px; height: 76px; border-radius: 50%; object-fit: cover; border: 3px solid #d7f1e9;">
+            {% else %}
+                <div style="width: 76px; height: 76px; flex-shrink: 0; border-radius: 50%; background: #d7f1e9; color: #252133; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.8rem;">
+                    {{ (seller.company_name or 'П')|first|upper }}
+                </div>
+            {% endif %}
+            <div>
+                <span style="display: inline-block; background: rgba(215, 241, 233, 0.18); color: #d7f1e9; font-size: 0.74rem; font-weight: 700; padding: 3px 10px; border-radius: 6px; margin-bottom: 6px;">
+                    Профиль продавца
+                </span>
+                <h1 style="font-size: 1.6rem; font-weight: 800; margin: 0;">{{ seller.company_name }}</h1>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+            <div style="background: rgba(255, 255, 255, 0.12); padding: 12px 18px; border-radius: 14px; text-align: center;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #d7f1e9;">
+                    {{ avg_rating if avg_rating > 0 else '—' }}
+                </div>
+                <div style="font-size: 0.76rem; opacity: 0.85;">Рейтинг из 5</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.12); padding: 12px 18px; border-radius: 14px; text-align: center;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #ffffff;">{{ products|length }}</div>
+                <div style="font-size: 0.76rem; opacity: 0.85;">Объявлений</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.12); padding: 12px 18px; border-radius: 14px; text-align: center;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #ffffff;">{{ reviews|length }}</div>
+                <div style="font-size: 0.76rem; opacity: 0.85;">Отзывов</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Объявления продавца -->
+    <div style="margin-bottom: 40px;">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 18px;">Объявления продавца ({{ products|length }})</h2>
+        {% if products %}
+        <div class="wb-products-grid">
+            {% for p in products %}
+            {% set cover = p.image_filename|first_img %}
+            {% set photos_count = (p.image_filename|img_list)|length %}
+            <div class="wb-product-card">
+                <a href="{{ url_for('product_detail', pid=p.ID_Products) }}" style="text-decoration: none; color: inherit; display: block;">
+                    <div class="wb-photo">
+                        {% if cover %}
+                            <img src="{{ url_for('static', filename='uploads/' + cover) }}" alt="{{ p.title }}">
+                        {% else %}
+                            <div class="wb-no-photo">Без фото</div>
+                        {% endif %}
+                        <span class="wb-badge-bottom">{{ p.category|sub_cat }}</span>
+                        {% if photos_count > 1 %}
+                            <span style="position: absolute; top: 10px; right: 10px; background: rgba(37,33,51,0.75); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+                                {{ photos_count }} фото
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="wb-price-row">
+                        <span class="wb-card-price">{{ "{:,.0f}".format(p.price).replace(',', ' ') }} ₽</span>
+                        <span class="wb-card-unit">/ {{ p.unit }}</span>
+                    </div>
+
+                    <div class="wb-card-title" title="{{ p.title }}">
+                        {{ p.title }}{% if p.description %} — {{ p.description }}{% endif %}
+                    </div>
+                </a>
+
+                <div style="margin-top: auto;">
+                    {% if session.user_id == seller.ID_Users %}
+                        <a href="{{ url_for('edit_product', pid=p.ID_Products) }}" class="btn-wb-soft">Редактировать</a>
+                    {% elif session.role in ['buyer', 'both'] %}
+                        <a href="{{ url_for('start_chat', product_id=p.ID_Products) }}" class="btn-wb-primary">Написать продавцу</a>
+                    {% elif not session.user_id %}
+                        <a href="{{ url_for('login') }}" class="btn-wb-soft">Связаться</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <div class="wb-box" style="text-align: center; color: #767686;">У продавца пока нет активных объявлений.</div>
+        {% endif %}
+    </div>
+
+    <!-- Отзывы покупателей о продавце -->
+    <div class="wb-box">
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 18px;">Отзывы покупателей ({{ reviews|length }})</h2>
+        {% if reviews %}
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                {% for r in reviews %}
+                <div style="background: #f5f5f8; padding: 16px 20px; border-radius: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <strong style="font-size: 0.94rem; color: #252133;">{{ r.buyer_name }}</strong>
+                        <span style="background: #91d3db; color: #252133; font-weight: 700; font-size: 0.8rem; padding: 3px 10px; border-radius: 6px;">
+                            Оценка: {{ r.rating }} из 5
+                        </span>
+                    </div>
+                    <div style="font-size: 0.78rem; color: #767686; margin-bottom: 8px;">
+                        Товар: {{ r.product_title }} · {{ r.created_at }}
+                    </div>
+                    <p style="font-size: 0.92rem; color: #252133; margin-bottom: {{ '10px' if r.review_image else '0' }};">{{ r.review_text }}</p>
+                    {% if r.review_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + r.review_image) }}" style="max-height: 150px; border-radius: 10px; border: 1px solid #e2e2ea;">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #767686; font-size: 0.9rem; margin: 0;">Отзывов пока нет.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

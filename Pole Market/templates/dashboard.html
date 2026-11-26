@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="wb-container" style="margin-top: 28px; margin-bottom: 48px;">
+    <div style="background: #f5f5f8; border-radius: 18px; padding: 24px 28px; margin-bottom: 24px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                {% if user_info.avatar %}
+                    <img src="{{ url_for('static', filename='uploads/' + user_info.avatar) }}" style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%; object-fit: cover; border: 3px solid #91d3db;">
+                {% else %}
+                    <div style="width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%; background: #252133; color: #d7f1e9; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem;">
+                        {{ (session.company_name or 'П')|first|upper }}
+                    </div>
+                {% endif %}
+                <div>
+                    <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 4px;">{{ user_info.company_name }}</h2>
+                    <div style="font-size: 0.85rem; color: #767686;">
+                        Логин: <strong>{{ session.username }}</strong>
+                        {% if user_info.phone %} · {{ user_info.phone }}{% endif %}
+                        {% if user_info.email %} · {{ user_info.email }}{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+                {% if session.role != 'admin' %}
+                <form method="POST" action="{{ url_for('change_role') }}" style="display: flex; align-items: center; gap: 8px; background: #ffffff; padding: 6px 10px; border-radius: 12px; border: 1px solid #e2e2ea;">
+                    <span style="font-size: 0.8rem; color: #767686; font-weight: 600;">Режим:</span>
+                    <select name="new_role" style="border: none; background: transparent; font-size: 0.85rem; font-weight: 700; color: #252133; outline: none; cursor: pointer;">
+                        <option value="buyer" {{ 'selected' if session.role == 'buyer' }}>Покупатель</option>
+                        <option value="seller" {{ 'selected' if session.role == 'seller' }}>Продавец</option>
+                        <option value="both" {{ 'selected' if session.role == 'both' }}>Покупатель и Продавец</option>
+                    </select>
+                    <button type="submit" style="background: #3a8fbc; color: #fff; border: none; border-radius: 8px; padding: 5px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                        Сохранить
+                    </button>
+                </form>
+                <a href="{{ url_for('support') }}" class="btn-wb-primary" style="width: auto;">Написать в поддержку</a>
+                {% else %}
+                    <span style="background: #252133; color: #d7f1e9; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 700;">Администратор</span>
+                {% endif %}
+
+                <a href="{{ url_for('index') }}" class="btn-wb-soft" style="width: auto;">В каталог</a>
+            </div>
+        </div>
+
+        {% if session.role != 'admin' %}
+        <div style="background: #ffffff; padding: 16px 20px; border-radius: 14px; border: 1px solid #e6e6ee;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.85rem; font-weight: 700; color: #252133;">Заполненность профиля: {{ profile_percent }}%</span>
+                {% if missing_tips %}
+                    <span style="font-size: 0.78rem; color: #3d517e;">Осталось: {{ missing_tips|join(', ') }}</span>
+                {% else %}
+                    <span style="font-size: 0.78rem; color: #3a8fbc; font-weight: 700;">Профиль заполнен на 100%</span>
+                {% endif %}
+            </div>
+            <div style="width: 100%; height: 10px; background: #ececf2; border-radius: 99px; overflow: hidden;">
+                <div style="width: {{ profile_percent }}%; height: 100%; background: linear-gradient(90deg, #91d3db 0%, #3a8fbc 60%, #3d517e 100%); border-radius: 99px; transition: width 0.4s ease;"></div>
+            </div>
+
+            <details style="margin-top: 12px;">
+                <summary style="font-size: 0.82rem; font-weight: 700; color: #3a8fbc; cursor: pointer;">Редактировать личные данные и аватарку</summary>
+                <form method="POST" action="{{ url_for('update_profile') }}" enctype="multipart/form-data" style="margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end;">
+                    <div>
+                        <label class="wb-label">Имя и фамилия</label>
+                        <input type="text" name="full_name" class="wb-input" value="{{ user_info.company_name or '' }}" required>
+                    </div>
+                    <div>
+                        <label class="wb-label">Телефон</label>
+                        <input type="tel" name="phone" class="wb-input" value="{{ user_info.phone or '' }}" placeholder="+7 (999) 000-00-00">
+                    </div>
+                    <div>
+                        <label class="wb-label">Почта</label>
+                        <input type="email" name="email" class="wb-input" value="{{ user_info.email or '' }}" placeholder="mail@example.ru">
+                    </div>
+                    <div>
+                        <label class="wb-label">Аватарка</label>
+                        <input type="file" name="avatar" accept="image/*" class="wb-input" style="padding: 7px 10px;">
+                    </div>
+                    <div>
+                        <button type="submit" class="btn-wb-primary">Обновить профиль</button>
+                    </div>
+                </form>
+            </details>
+        </div>
+        {% endif %}
+    </div>
+    {% if session.role in ['seller', 'both', 'admin'] %}
+    <div class="wb-box" style="margin-bottom: 24px;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <h3 style="font-size: 1.15rem; font-weight: 800; margin: 0;">
+                {{ 'Все товары и услуги на площадке' if session.role == 'admin' else 'Мои объявления в продаже' }} ({{ products|length }})
+            </h3>
+            {% if session.role in ['seller', 'both'] %}
+                <a href="{{ url_for('add_product') }}" class="btn-wb-primary" style="width: auto; height: 38px; font-size: 0.85rem; padding: 0 18px;">
+                    + Разместить новое объявление
+                </a>
+            {% endif %}
+        </div>
+
+        {% if products %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 18px; background: #f5f5f8; padding: 12px; border-radius: 12px;">
+            <input type="text" id="dashProdSearch" class="wb-input" style="background: #ffffff; padding: 8px 12px; font-size: 0.85rem;" placeholder="Поиск по названию или продавцу...">
+            
+            <select id="dashProdCatFilter" class="wb-input" style="background: #ffffff; padding: 8px 12px; font-size: 0.85rem;">
+                <option value="all">Все разделы</option>
+                {% for m_cat in category_tree.keys() %}
+                    <option value="{{ m_cat }}">{{ m_cat }}</option>
+                {% endfor %}
+            </select>
+
+            <select id="dashProdSubFilter" class="wb-input" style="background: #ffffff; padding: 8px 12px; font-size: 0.85rem;">
+                <option value="all">Все подкатегории</option>
+            </select>
+
+            <select id="dashProdSort" class="wb-input" style="background: #ffffff; padding: 8px 12px; font-size: 0.85rem;">
+                <option value="newest">Сначала новые</option>
+                <option value="price_asc">Сначала дешевле</option>
+                <option value="price_desc">Сначала дороже</option>
+                <option value="title_asc">По названию (А–Я)</option>
+            </select>
+        </div>
+
+        <div id="dashProductsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px;">
+            {% for p in products %}
+            {% set cover = p.image_filename|first_img %}
+            <div class="dash-prod-card" 
+                 data-id="{{ p.ID_Products }}"
+                 data-price="{{ p.price }}"
+                 data-title="{{ p.title|lower }}"
+                 data-main="{{ p.category|main_cat }}"
+                 data-sub="{{ p.category|sub_cat }}"
+                 data-search="{{ p.title|lower }} {{ (p.seller_name or '')|lower }} {{ p.category|lower }}"
+                 style="background: #f5f5f8; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #ececf2; min-width: 0;">
+                <a href="{{ url_for('product_detail', pid=p.ID_Products) }}" style="display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; margin-bottom: 12px; min-width: 0;">
+                    {% if cover %}
+                        <img src="{{ url_for('static', filename='uploads/' + cover) }}" style="width: 56px; height: 70px; object-fit: cover; border-radius: 10px; flex-shrink: 0;">
+                    {% else %}
+                        <div style="width: 56px; height: 70px; border-radius: 10px; background: #d7f1e9; color: #3d517e; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;">Фото</div>
+                    {% endif %}
+                    <div style="overflow: hidden; min-width: 0;">
+                        <div style="font-size: 0.72rem; color: #3d517e; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ p.category }}{% if session.role == 'admin' %} · {{ p.seller_name }}{% endif %}
+                        </div>
+                        <div style="font-weight: 700; font-size: 0.94rem; color: #252133; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ p.title }}</div>
+                        <div style="font-weight: 800; font-size: 0.9rem; color: #3a8fbc; margin-top: 2px;">{{ "{:,.0f}".format(p.price).replace(',', ' ') }} ₽ / {{ p.unit }}</div>
+                    </div>
+                </a>
+                <div style="display: flex; gap: 8px;">
+                    <a href="{{ url_for('edit_product', pid=p.ID_Products) }}" class="btn-wb-soft" style="height: 34px; font-size: 0.8rem; flex: 1;">Редактировать</a>
+                    <a href="{{ url_for('delete_product', pid=p.ID_Products) }}" class="btn-wb-danger" style="height: 34px; padding: 0 12px;">Удалить</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p style="color: #767686; font-size: 0.9rem; margin: 0;">Список объявлений пуст.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; align-items: start;">
+        {% if session.role != 'admin' %}
+        <div class="wb-box">
+            <div style="display: flex; gap: 8px; margin-bottom: 16px; background: #f5f5f8; padding: 5px; border-radius: 12px;">
+                <button type="button" class="deal-tab-btn active" onclick="switchDealTab('purchases', this)" style="flex: 1; padding: 9px; border: none; border-radius: 9px; font-weight: 700; font-size: 0.88rem; cursor: pointer; background: #252133; color: #d7f1e9;">
+                    Мои покупки ({{ purchases|length }})
+                </button>
+                <button type="button" class="deal-tab-btn" onclick="switchDealTab('sales', this)" style="flex: 1; padding: 9px; border: none; border-radius: 9px; font-weight: 700; font-size: 0.88rem; cursor: pointer; background: transparent; color: #252133;">
+                    Мои продажи ({{ sales|length }})
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 18px;">
+                <button type="button" class="status-filter-btn active" onclick="filterDeals('in_progress', this)" style="padding: 6px 14px; border-radius: 8px; border: 1px solid #3a8fbc; background: #3a8fbc; color: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                    В процессе
+                </button>
+                <button type="button" class="status-filter-btn" onclick="filterDeals('completed', this)" style="padding: 6px 14px; border-radius: 8px; border: 1px solid #e2e2ea; background: #fff; color: #252133; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                    Завершённые
+                </button>
+            </div>
+
+            <div id="tab-purchases" class="deal-list" style="display: flex; flex-direction: column; gap: 12px;">
+                {% for d in purchases %}
+                <a href="{{ url_for('chat_room', room_id=d.ID_ChatRooms) }}" class="deal-card" data-status="{{ d.status or 'in_progress' }}" 
+                   style="display: block; text-decoration: none; background: #f5f5f8; padding: 15px 18px; border-radius: 14px; color: #252133; border-left: 4px solid {{ '#3d517e' if d.status == 'completed' else '#3a8fbc' }};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-weight: 700; font-size: 0.96rem;">{{ d.title }}</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: {{ '#91d3db' if d.status == 'completed' else '#d7f1e9' }}; color: #252133;">
+                            {{ 'Завершена' if d.status == 'completed' else 'В процессе' }}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: #767686; margin-bottom: 6px;">
+                        Продавец: <strong>{{ d.partner_name }}</strong> · {{ d.price }} ₽ / {{ d.unit }}
+                    </div>
+                    {% if d.status != 'completed' %}
+                    <div style="font-size: 0.76rem; color: #3d517e;">
+                        Подтверждение: Вы — <strong>{{ 'Да' if d.buyer_confirmed else 'Ожидается' }}</strong> | Продавец — <strong>{{ 'Да' if d.seller_confirmed else 'Ожидается' }}</strong>
+                    </div>
+                    {% endif %}
+                </a>
+                {% else %}
+                <p style="color: #767686; font-size: 0.88rem; text-align: center; padding: 30px 0;">У вас пока нет покупок</p>
+                {% endfor %}
+            </div>
+
+            <div id="tab-sales" class="deal-list" style="display: none; flex-direction: column; gap: 12px;">
+                {% for d in sales %}
+                <a href="{{ url_for('chat_room', room_id=d.ID_ChatRooms) }}" class="deal-card" data-status="{{ d.status or 'in_progress' }}" 
+                   style="display: block; text-decoration: none; background: #f5f5f8; padding: 15px 18px; border-radius: 14px; color: #252133; border-left: 4px solid {{ '#3d517e' if d.status == 'completed' else '#3a8fbc' }};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-weight: 700; font-size: 0.96rem;">{{ d.title }}</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: {{ '#91d3db' if d.status == 'completed' else '#d7f1e9' }}; color: #252133;">
+                            {{ 'Завершена' if d.status == 'completed' else 'В процессе' }}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: #767686; margin-bottom: 6px;">
+                        Покупатель: <strong>{{ d.partner_name }}</strong> · {{ d.price }} ₽ / {{ d.unit }}
+                    </div>
+                    {% if d.status != 'completed' %}
+                    <div style="font-size: 0.76rem; color: #3d517e;">
+                        Подтверждение: Покупатель — <strong>{{ 'Да' if d.buyer_confirmed else 'Ожидается' }}</strong> | Вы — <strong>{{ 'Да' if d.seller_confirmed else 'Ожидается' }}</strong>
+                    </div>
+                    {% endif %}
+                </a>
+                {% else %}
+                <p style="color: #767686; font-size: 0.88rem; text-align: center; padding: 30px 0;">У вас пока нет продаж</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% if session.role == 'admin' %}
+            <div class="wb-box">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 14px; color: #b91c1c;">
+                    Активные жалобы на товары ({{ reports|length }})
+                </h3>
+                {% if reports %}
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% for r in reports %}
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 14px;">
+                        <div style="font-weight: 700; font-size: 0.92rem; margin-bottom: 4px;">
+                            Объявление: <a href="{{ url_for('product_detail', pid=r.product_id) }}" style="color: #3a8fbc;">{{ r.product_title }}</a>
+                        </div>
+                        <div style="font-size: 0.84rem; color: #252133; margin-bottom: 6px;">Причина: <strong>{{ r.reason }}</strong></div>
+                        <div style="font-size: 0.76rem; color: #767686; margin-bottom: 10px;">Отправил: {{ r.reporter_name }} · {{ r.created_at }}</div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a href="{{ url_for('delete_product', pid=r.product_id) }}" class="btn-wb-danger">Удалить товар</a>
+                            <form method="POST" action="{{ url_for('dismiss_report', rid=r.ID_Reports) }}" style="margin: 0;">
+                                <button type="submit" class="btn-wb-soft" style="height: 32px; font-size: 0.8rem; width: auto; padding: 0 12px;">Отклонить жалобу</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p style="color: #767686; font-size: 0.88rem; margin: 0;">Новых жалоб нет.</p>
+                {% endif %}
+            </div>
+
+            <div class="wb-box">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 14px;">
+                    Обращения в поддержку ({{ support_users|length }})
+                </h3>
+                {% if support_users %}
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    {% for su in support_users %}
+                    <a href="{{ url_for('support', target_uid=su.ID_Users) }}" style="display: flex; justify-content: space-between; align-items: center; text-decoration: none; background: #f5f5f8; padding: 12px 16px; border-radius: 12px; color: #252133;">
+                        <span style="font-weight: 700; font-size: 0.9rem;">{{ su.company_name }} (@{{ su.username }})</span>
+                        <span style="color: #3a8fbc; font-size: 0.82rem; font-weight: 700;">Открыть диалог →</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p style="color: #767686; font-size: 0.88rem; margin: 0;">Обращений в поддержку пока нет.</p>
+                {% endif %}
+            </div>
+
+            <div class="wb-box">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 14px;">
+                    Все чаты на площадке ({{ all_chats|length }})
+                </h3>
+                {% if all_chats %}
+                <div style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto;">
+                    {% for ch in all_chats %}
+                    <a href="{{ url_for('chat_room', room_id=ch.ID_ChatRooms) }}" style="display: flex; justify-content: space-between; align-items: center; text-decoration: none; background: #f5f5f8; padding: 10px 14px; border-radius: 10px; color: #252133; font-size: 0.85rem;">
+                        <div>
+                            <div style="font-weight: 700;">{{ ch.title }}</div>
+                            <div style="color: #767686; font-size: 0.78rem;">{{ ch.buyer_name }} ↔ {{ ch.seller_name }}</div>
+                        </div>
+                        <span style="background: #d7f1e9; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">
+                            {{ 'Завершён' if ch.status == 'completed' else 'Открыть' }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p style="color: #767686; font-size: 0.88rem; margin: 0;">Чатов пока нет.</p>
+                {% endif %}
+            </div>
+            <div class="wb-box">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 14px;">
+                    Пользователи и блокировка ({{ users|length }})
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    {% for u in users %}
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: {{ '#fef2f2' if u.is_blocked else '#f5f5f8' }}; font-size: 0.85rem;">
+                        <div>
+                            <strong>{{ u.company_name }}</strong> (@{{ u.username }})
+                            <div style="font-size: 0.76rem; color: #767686;">
+                                Роль: {{ u.role }} · {{ u.phone or 'без тел.' }} · {{ u.email or '' }}
+                            </div>
+                        </div>
+                        {% if u.role != 'admin' %}
+                        <form method="POST" action="{{ url_for('toggle_block', uid=u.ID_Users) }}" style="margin: 0;">
+                            <button type="submit" style="border: none; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; {{ 'background: #d7f1e9; color: #252133;' if u.is_blocked else 'background: #fee2e2; color: #b91c1c;' }}">
+                                {{ 'Разблокировать' if u.is_blocked else 'Заблокировать' }}
+                            </button>
+                        </form>
+                        {% else %}
+                            <span style="background: #252133; color: #d7f1e9; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;">Админ</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+    const dashCategoryTree = {{ category_tree|tojson }};
+
+    function switchDealTab(tabName, btn) {
+        document.getElementById('tab-purchases').style.display = (tabName === 'purchases') ? 'flex' : 'none';
+        document.getElementById('tab-sales').style.display = (tabName === 'sales') ? 'flex' : 'none';
+        document.querySelectorAll('.deal-tab-btn').forEach(b => {
+            b.style.background = 'transparent';
+            b.style.color = '#252133';
+        });
+        btn.style.background = '#252133';
+        btn.style.color = '#d7f1e9';
+    }
+
+    function filterDeals(status, btn) {
+        document.querySelectorAll('.status-filter-btn').forEach(b => {
+            b.style.background = '#ffffff';
+            b.style.color = '#252133';
+            b.style.borderColor = '#e2e2ea';
+        });
+        btn.style.background = '#3a8fbc';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#3a8fbc';
+
+        document.querySelectorAll('.deal-card').forEach(card => {
+            card.style.display = (card.getAttribute('data-status') === status) ? 'block' : 'none';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const firstStatusBtn = document.querySelector('.status-filter-btn');
+        if (firstStatusBtn) filterDeals('in_progress', firstStatusBtn);
+    });
+
+    const dashSearch = document.getElementById('dashProdSearch');
+    const dashCat = document.getElementById('dashProdCatFilter');
+    const dashSub = document.getElementById('dashProdSubFilter');
+    const dashSort = document.getElementById('dashProdSort');
+    const dashGrid = document.getElementById('dashProductsGrid');
+
+    function populateDashSubCategories() {
+        if (!dashCat || !dashSub) return;
+        const selectedMain = dashCat.value;
+        let optionsHtml = '<option value="all">Все подкатегории</option>';
+
+        if (selectedMain === 'all') {
+            Object.values(dashCategoryTree).forEach(subList => {
+                subList.forEach(sub => {
+                    optionsHtml += `<option value="${sub}">${sub}</option>`;
+                });
+            });
+        } else if (dashCategoryTree[selectedMain]) {
+            dashCategoryTree[selectedMain].forEach(sub => {
+                optionsHtml += `<option value="${sub}">${sub}</option>`;
+            });
+        }
+        dashSub.innerHTML = optionsHtml;
+    }
+
+    function updateDashProducts() {
+        if (!dashGrid) return;
+        const q = (dashSearch ? dashSearch.value : '').toLowerCase().trim();
+        const cat = dashCat ? dashCat.value : 'all';
+        const sub = dashSub ? dashSub.value : 'all';
+        const sortBy = dashSort ? dashSort.value : 'newest';
+
+        const items = Array.from(dashGrid.querySelectorAll('.dash-prod-card'));
+
+        items.sort((a, b) => {
+            if (sortBy === 'price_asc') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+            if (sortBy === 'price_desc') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+            if (sortBy === 'title_asc') return a.dataset.title.localeCompare(b.dataset.title, 'ru');
+            return parseInt(b.dataset.id) - parseInt(a.dataset.id);
+        });
+
+        items.forEach(item => {
+            const okCat = (cat === 'all' || item.dataset.main === cat);
+            const okSub = (sub === 'all' || item.dataset.sub === sub);
+            const okText = item.dataset.search.includes(q);
+            item.style.display = (okCat && okSub && okText) ? 'flex' : 'none';
+            dashGrid.appendChild(item);
+        });
+    }
+
+    if (dashCat) {
+        populateDashSubCategories();
+        dashCat.addEventListener('change', () => {
+            populateDashSubCategories();
+            updateDashProducts();
+        });
+    }
+    if (dashSub) dashSub.addEventListener('change', updateDashProducts);
+    if (dashSearch) dashSearch.addEventListener('input', updateDashProducts);
+    if (dashSort) dashSort.addEventListener('change', updateDashProducts);
+</script>
+{% endblock %}

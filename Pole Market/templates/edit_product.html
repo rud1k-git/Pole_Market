@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block content %}
+{% set cur_main = product.category|main_cat %}
+{% set cur_sub = product.category|sub_cat %}
+{% set cur_imgs = product.image_filename|img_list %}
+
+<div class="wb-container" style="margin-top: 32px; margin-bottom: 48px;">
+    <div style="max-width: 660px; margin: 0 auto;">
+        <div class="wb-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 1.3rem; font-weight: 800; margin: 0;">Редактирование объявления</h2>
+                <a href="{{ url_for('dashboard') }}" class="btn-wb-soft" style="width: auto; height: 34px; font-size: 0.82rem;">Отмена</a>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="wb-field">
+                    <label class="wb-label">Название</label>
+                    <input type="text" name="title" class="wb-input" value="{{ product.title }}" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" class="wb-field">
+                    <div>
+                        <label class="wb-label">Основной раздел</label>
+                        <select name="main_category" id="editMainCat" class="wb-input">
+                            {% for m_cat in category_tree.keys() %}
+                                <option value="{{ m_cat }}" {{ 'selected' if cur_main == m_cat }}>{{ m_cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="wb-label">Подкатегория</label>
+                        <select name="sub_category" id="editSubCat" class="wb-input"></select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" class="wb-field">
+                    <div>
+                        <label class="wb-label">Цена (₽)</label>
+                        <input type="number" step="0.01" name="price" class="wb-input" value="{{ product.price }}" required>
+                    </div>
+                    <div>
+                        <label class="wb-label">Ед. измерения</label>
+                        <input type="text" name="unit" class="wb-input" value="{{ product.unit }}" required>
+                    </div>
+                </div>
+
+                <!-- Существующие фото (удаляются только по нажатию «Убрать») -->
+                <div class="wb-field">
+                    <label class="wb-label">Уже загруженные фотографии</label>
+                    {% if cur_imgs %}
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px;">
+                            {% for im in cur_imgs %}
+                            <div style="width: 92px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e2ea; background: #f5f5f8;">
+                                <input type="hidden" name="keep_images" value="{{ im }}">
+                                <img src="{{ url_for('static', filename='uploads/' + im) }}" style="width: 92px; height: 106px; object-fit: cover; display: block;">
+                                <button type="button" onclick="this.parentElement.remove()" style="width: 100%; background: #fee2e2; color: #b91c1c; border: none; padding: 5px 0; font-size: 0.74rem; font-weight: 700; cursor: pointer;">
+                                    Убрать
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p style="font-size: 0.82rem; color: #767686; margin-bottom: 10px;">Фотографий пока нет.</p>
+                    {% endif %}
+
+                    <!-- Накопительное добавление новых фото -->
+                    <label class="wb-label">Добавить ещё фотографии (старые не удалятся)</label>
+                    <input type="file" name="images" id="realEditInput" multiple accept="image/*" style="display: none;">
+                    <button type="button" onclick="document.getElementById('pickerEditInput').click()" class="btn-wb-soft" style="width: auto; margin-bottom: 10px;">
+                        + Выбрать фото
+                    </button>
+                    <input type="file" id="pickerEditInput" multiple accept="image/*" style="display: none;">
+                    <div id="editNewPreview" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+
+                <div class="wb-field" style="margin-bottom: 24px;">
+                    <label class="wb-label">Описание</label>
+                    <textarea name="description" class="wb-input" rows="4">{{ product.description or '' }}</textarea>
+                </div>
+
+                <button type="submit" class="btn-wb-primary" style="height: 44px;">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const categoryTree = {{ category_tree|tojson }};
+    const initialSub = {{ cur_sub|tojson }};
+    const mainSelect = document.getElementById('editMainCat');
+    const subSelect = document.getElementById('editSubCat');
+
+    function updateSubCategories(selectedSub = '') {
+        const subs = categoryTree[mainSelect.value] || [];
+        subSelect.innerHTML = subs.map(s => `<option value="${s}" ${s === selectedSub ? 'selected' : ''}>${s}</option>`).join('');
+    }
+    mainSelect.addEventListener('change', () => updateSubCategories());
+    updateSubCategories(initialSub);
+
+    const pickerEdit = document.getElementById('pickerEditInput');
+    const realEdit = document.getElementById('realEditInput');
+    const editPreview = document.getElementById('editNewPreview');
+    let newFilesList = [];
+
+    function syncEditFiles() {
+        const dt = new DataTransfer();
+        newFilesList.forEach(f => dt.items.add(f));
+        realEdit.files = dt.files;
+
+        editPreview.innerHTML = '';
+        newFilesList.forEach((file, index) => {
+            const wrap = document.createElement('div');
+            wrap.style.width = '92px';
+            wrap.style.borderRadius = '10px';
+            wrap.style.overflow = 'hidden';
+            wrap.style.border = '1px solid #91d3db';
+            wrap.style.background = '#f5f5f8';
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.width = '92px';
+            img.style.height = '106px';
+            img.style.objectFit = 'cover';
+            img.style.display = 'block';
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.textContent = 'Убрать';
+            delBtn.style.width = '100%';
+            delBtn.style.background = '#fee2e2';
+            delBtn.style.color = '#b91c1c';
+            delBtn.style.border = 'none';
+            delBtn.style.padding = '5px 0';
+            delBtn.style.fontSize = '0.74rem';
+            delBtn.style.fontWeight = '700';
+            delBtn.style.cursor = 'pointer';
+            delBtn.onclick = () => {
+                newFilesList.splice(index, 1);
+                syncEditFiles();
+            };
+
+            wrap.appendChild(img);
+            wrap.appendChild(delBtn);
+            editPreview.appendChild(wrap);
+        });
+    }
+
+    pickerEdit.addEventListener('change', (e) => {
+        newFilesList = newFilesList.concat(Array.from(e.target.files));
+        pickerEdit.value = '';
+        syncEditFiles();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="wb-container" style="margin-top: 32px; margin-bottom: 56px;">
+    <div style="max-width: 660px; margin: 0 auto;">
+        <div class="wb-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px;">
+                <h2 style="font-size: 1.35rem; font-weight: 800; margin: 0;">Новое объявление</h2>
+                <a href="{{ url_for('dashboard') }}" class="btn-wb-soft" style="width: auto; height: 36px; font-size: 0.84rem;">← В кабинет</a>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="wb-field">
+                    <label class="wb-label">Название товара или услуги</label>
+                    <input type="text" name="title" class="wb-input" placeholder="Напр. Свежая клубника, Плетёная корзинка или Покос травы" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" class="wb-field">
+                    <div>
+                        <label class="wb-label">Основной раздел</label>
+                        <select name="main_category" id="addMainCat" class="wb-input">
+                            {% for m_cat in category_tree.keys() %}
+                                <option value="{{ m_cat }}">{{ m_cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="wb-label">Подкатегория</label>
+                        <select name="sub_category" id="addSubCat" class="wb-input"></select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" class="wb-field">
+                    <div>
+                        <label class="wb-label">Цена (₽)</label>
+                        <input type="number" step="0.01" name="price" class="wb-input" placeholder="1200" required>
+                    </div>
+                    <div>
+                        <label class="wb-label">За что цена (ед. изм.)</label>
+                        <input type="text" name="unit" class="wb-input" placeholder="шт, кг, час, услуга" required>
+                    </div>
+                </div>
+
+                <!-- Накопительная загрузка фото (можно добавлять из разных папок без перезаписи) -->
+                <div class="wb-field">
+                    <label class="wb-label">Фотографии (можно добавлять частями, старые не пропадут)</label>
+                    <input type="file" name="images" id="realFileInput" multiple accept="image/*" style="display: none;">
+                    
+                    <button type="button" onclick="document.getElementById('pickerInput').click()" class="btn-wb-soft" style="width: auto; margin-bottom: 12px;">
+                        + Выбрать и добавить фото
+                    </button>
+                    <input type="file" id="pickerInput" multiple accept="image/*" style="display: none;">
+
+                    <div id="previewGrid" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+
+                <div class="wb-field" style="margin-bottom: 24px;">
+                    <label class="wb-label">Подробное описание</label>
+                    <textarea name="description" class="wb-input" rows="4" placeholder="Расскажите о качестве, составе, размерах, условиях доставки или выполнения услуги..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-wb-primary" style="height: 46px; font-size: 0.95rem;">
+                    Опубликовать объявление
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const categoryTree = {{ category_tree|tojson }};
+    const mainSelect = document.getElementById('addMainCat');
+    const subSelect = document.getElementById('addSubCat');
+
+    function updateSubCats() {
+        const subs = categoryTree[mainSelect.value] || [];
+        subSelect.innerHTML = subs.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+    mainSelect.addEventListener('change', updateSubCats);
+    updateSubCats();
+
+    // Накопительный массив файлов (добавляет новые к уже выбранным)
+    const pickerInput = document.getElementById('pickerInput');
+    const realFileInput = document.getElementById('realFileInput');
+    const previewGrid = document.getElementById('previewGrid');
+    let accumulatedFiles = [];
+
+    function syncAndRender() {
+        const dt = new DataTransfer();
+        accumulatedFiles.forEach(file => dt.items.add(file));
+        realFileInput.files = dt.files;
+
+        previewGrid.innerHTML = '';
+        accumulatedFiles.forEach((file, idx) => {
+            const card = document.createElement('div');
+            card.style.width = '90px';
+            card.style.borderRadius = '10px';
+            card.style.overflow = 'hidden';
+            card.style.border = '1px solid #e2e2ea';
+            card.style.background = '#f5f5f8';
+
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.width = '90px';
+            img.style.height = '105px';
+            img.style.objectFit = 'cover';
+            img.style.display = 'block';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = 'Убрать';
+            btn.style.width = '100%';
+            btn.style.background = '#fee2e2';
+            btn.style.color = '#b91c1c';
+            btn.style.border = 'none';
+            btn.style.padding = '5px 0';
+            btn.style.fontSize = '0.74rem';
+            btn.style.fontWeight = '700';
+            btn.style.cursor = 'pointer';
+            btn.onclick = () => {
+                accumulatedFiles.splice(idx, 1);
+                syncAndRender();
+            };
+
+            card.appendChild(img);
+            card.appendChild(btn);
+            previewGrid.appendChild(card);
+        });
+    }
+
+    pickerInput.addEventListener('change', (e) => {
+        const newlyPicked = Array.from(e.target.files);
+        accumulatedFiles = accumulatedFiles.concat(newlyPicked);
+        pickerInput.value = ''; // сбрасываем, чтобы можно было добирать ещё
+        syncAndRender();
+    });
+</script>
+{% endblock %}

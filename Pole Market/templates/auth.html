@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="wb-container" style="margin-top: 48px; margin-bottom: 48px;">
+    <div style="max-width: 440px; margin: 0 auto;">
+        <div class="wb-box">
+            <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 6px;">
+                {{ 'Регистрация' if mode == 'register' else 'Вход в аккаунт' }}
+            </h2>
+            <p style="color: #767686; font-size: 0.88rem; margin-bottom: 24px;">
+                {{ 'Заполните данные, чтобы покупать или продавать' if mode == 'register' else 'Введите логин и пароль от вашего профиля' }}
+            </p>
+
+            <form method="POST">
+                <div class="wb-field">
+                    <label class="wb-label">Логин</label>
+                    <input type="text" name="username" class="wb-input" placeholder="Придумайте логин" required>
+                </div>
+                <div class="wb-field">
+                    <label class="wb-label">Пароль</label>
+                    <input type="password" name="password" class="wb-input" placeholder="Придумайте пароль" required>
+                </div>
+                {% if mode == 'register' %}
+                <div class="wb-field">
+                    <label class="wb-label">Подтвердите пароль</label>
+                    <input type="password" name="confirm_password" class="wb-input" placeholder="Повторите пароль ещё раз" required>
+                </div>
+                <div class="wb-field">
+                    <label class="wb-label">Ваше имя и фамилия</label>
+                    <input type="text" name="full_name" class="wb-input" placeholder="Напр. Анна Смирнова" required>
+                </div>
+                <div class="wb-field">
+                    <label class="wb-label">Номер телефона</label>
+                    <input type="tel" name="phone" class="wb-input" placeholder="+7 (999) 123-45-67" required>
+                </div>
+                <div class="wb-field">
+                    <label class="wb-label">Электронная почта</label>
+                    <input type="email" name="email" class="wb-input" placeholder="example@mail.ru" required>
+                </div>
+                <div class="wb-field" style="margin-bottom: 24px;">
+                    <label class="wb-label">Чем планируете заниматься?</label>
+                    <select name="role" class="wb-input">
+                        <option value="buyer">Покупать</option>
+                        <option value="seller">Продавать</option>
+                        <option value="both">Покупать и продавать</option>
+                    </select>
+                </div>
+                {% endif %}
+                <button type="submit" class="btn-wb-primary" style="height: 44px; font-size: 0.95rem;">
+                    {{ 'Создать аккаунт' if mode == 'register' else 'Войти' }}
+                </button>
+            </form>
+
+            <div style="text-align: center; margin-top: 18px; font-size: 0.88rem; color: #767686;">
+                {% if mode == 'register' %}
+                    Уже зарегистрированы? <a href="{{ url_for('login') }}" style="color: #3a8fbc; font-weight: 600; text-decoration: none;">Войти</a>
+                {% else %}
+                    Нет аккаунта? <a href="{{ url_for('register') }}" style="color: #3a8fbc; font-weight: 600; text-decoration: none;">Регистрация</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

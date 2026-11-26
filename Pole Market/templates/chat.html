@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block content %}
+{% set cover = room.image_filename|first_img %}
+<div class="wb-container" style="margin-top: 28px; margin-bottom: 48px;">
+    <div style="max-width: 820px; margin: 0 auto;">
+        <div class="wb-box" style="padding: 0; overflow: hidden;">
+            
+            <!-- Карточка товара, по которому идёт общение -->
+            <div style="background: #f5f5f8; padding: 14px 24px; border-bottom: 1px solid #e6e6ee; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+                <a href="{{ url_for('product_detail', pid=room.product_id) }}" style="display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; flex: 1; min-width: 240px;">
+                    {% if cover %}
+                        <img src="{{ url_for('static', filename='uploads/' + cover) }}" style="width: 54px; height: 68px; object-fit: cover; border-radius: 10px; border: 1px solid #dce6ec; flex-shrink: 0;">
+                    {% else %}
+                        <div style="width: 54px; height: 68px; border-radius: 10px; background: #d7f1e9; color: #3d517e; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;">Фото</div>
+                    {% endif %}
+                    <div>
+                        <span style="display: inline-block; background: #ffffff; color: #3d517e; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; margin-bottom: 3px;">
+                            {{ room.category }}
+                        </span>
+                        <div style="font-weight: 800; font-size: 1rem; color: #252133; line-height: 1.25;">
+                            {{ room.title }} · <span style="color: #3a8fbc;">{{ "{:,.0f}".format(room.price).replace(',', ' ') }} ₽ / {{ room.unit }}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #767686; margin-top: 2px;">
+                            Покупатель: <strong>{{ room.buyer_name }}</strong> ↔ Продавец: <strong>{{ room.seller_name }}</strong>
+                        </div>
+                    </div>
+                </a>
+
+                <div style="display: flex; gap: 8px;">
+                    <a href="{{ url_for('product_detail', pid=room.product_id) }}" class="btn-wb-primary" style="width: auto; height: 36px; font-size: 0.8rem; padding: 0 14px;">К объявлению</a>
+                    <a href="{{ url_for('dashboard') }}" class="btn-wb-soft" style="width: auto; height: 36px; font-size: 0.8rem; padding: 0 14px;">В кабинет</a>
+                </div>
+            </div>
+
+            <!-- Панель подтверждения сделки -->
+            <div style="background: {{ '#d7f1e9' if room.status == 'completed' else '#eef6fa' }}; padding: 14px 24px; border-bottom: 1px solid #dce6ec; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+                <div>
+                    {% if room.status == 'completed' %}
+                        <div style="font-weight: 800; color: #252133; font-size: 0.92rem;">Сделка завершена (подтверждена обеими сторонами)</div>
+                    {% else %}
+                        <div style="font-weight: 700; color: #252133; font-size: 0.9rem; margin-bottom: 2px;">Статус сделки: В процессе</div>
+                        <div style="color: #3d517e; font-size: 0.8rem;">
+                            Покупатель: <strong>{{ 'Подтвердил' if room.buyer_confirmed else 'Ожидается' }}</strong> · 
+                            Продавец: <strong>{{ 'Подтвердил' if room.seller_confirmed else 'Ожидается' }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if room.status != 'completed' %}
+                    {% set i_confirmed = (room.buyer_confirmed if session.user_id == room.buyer_id else room.seller_confirmed) %}
+                    {% if not i_confirmed %}
+                        <form method="POST" action="{{ url_for('confirm_deal', room_id=room.ID_ChatRooms) }}" style="margin: 0;">
+                            <button type="submit" style="background: #252133; color: #d7f1e9; border: none; border-radius: 10px; padding: 9px 18px; font-size: 0.84rem; font-weight: 700; cursor: pointer;">
+                                Подтвердить сделку
+                            </button>
+                        </form>
+                    {% else %}
+                        <span style="background: #ffffff; color: #252133; padding: 7px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; border: 1px solid #91d3db;">
+                            Вы подтвердили сделку. Ожидаем партнёра
+                        </span>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Форма отзыва -->
+            {% if room.status == 'completed' and session.user_id == room.buyer_id %}
+                <div style="background: #ffffff; padding: 16px 24px; border-bottom: 1px solid #ececf2;">
+                    {% if not has_review %}
+                        <form method="POST" action="{{ url_for('add_review', room_id=room.ID_ChatRooms) }}" enctype="multipart/form-data">
+                            <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 10px; color: #252133;">
+                                Оставьте отзыв о продавце {{ room.seller_name }}
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px;">
+                                <select name="rating" class="wb-input" style="width: auto; font-weight: 600;">
+                                    <option value="5">Оценка: 5 (Отлично)</option>
+                                    <option value="4">Оценка: 4 (Хорошо)</option>
+                                    <option value="3">Оценка: 3 (Нормально)</option>
+                                    <option value="2">Оценка: 2 (Плохо)</option>
+                                    <option value="1">Оценка: 1 (Ужасно)</option>
+                                </select>
+                                <input type="text" name="review_text" class="wb-input" style="flex: 1; min-width: 220px;" placeholder="Поделитесь впечатлениями..." required>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 0.8rem; color: #767686;">Фото к отзыву:</span>
+                                    <input type="file" name="review_image" accept="image/*" style="font-size: 0.8rem;">
+                                </div>
+                                <button type="submit" class="btn-wb-primary" style="width: auto;">Опубликовать отзыв</button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div style="font-size: 0.85rem; color: #3d517e; font-weight: 600;">
+                            Ваш отзыв опубликован в профиле продавца.
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div id="chat-box" style="height: 390px; overflow-y: auto; padding: 24px; background: #ffffff;"></div>
+
+            <form id="chat-form" style="padding: 14px 20px; background: #f5f5f8; border-top: 1px solid #e6e6ee; display: flex; gap: 10px;">
+                <input type="text" id="msg-input" class="wb-input" style="background: #ffffff; flex: 1;" placeholder="Напишите сообщение..." required autocomplete="off">
+                <button type="submit" class="btn-wb-primary" style="width: auto; padding: 0 24px;">Отправить</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const roomId = {{ room.ID_ChatRooms }};
+const chatBox = document.getElementById('chat-box');
+
+async function loadMessages() {
+    const res = await fetch(`/api/messages/${roomId}`);
+    const data = await res.json();
+    chatBox.innerHTML = data.map(m => `
+        <div style="display: flex; flex-direction: column; margin-bottom: 14px; align-items: ${m.is_me ? 'flex-end' : 'flex-start'};">
+            <span style="color: #767686; font-size: 0.74rem; margin-bottom: 4px;">${m.sender} · ${m.time}</span>
+            <div style="padding: 10px 16px; max-width: 75%; font-size: 0.92rem; border-radius: 14px; ${m.is_me ? 'background: #3a8fbc; color: #ffffff;' : 'background: #f5f5f8; color: #252133;'}">
+                ${m.text}
+            </div>
+        </div>
+    `).join('');
+}
+
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('msg-input');
+    if (!input.value.trim()) return;
+    await fetch(`/api/messages/${roomId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: input.value})
+    });
+    input.value = '';
+    await loadMessages();
+    chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+loadMessages();
+setInterval(loadMessages, 3000);
+</script>
+{% endblock %}

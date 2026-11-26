@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% block content %}
+{% set photos = product.image_filename|img_list %}
+{% set first_photo = product.image_filename|first_img %}
+<div class="wb-container" style="margin-top: 28px; margin-bottom: 56px;">
+    <div style="margin-bottom: 18px;">
+        <a href="{{ url_for('index') }}" style="color: #3a8fbc; text-decoration: none; font-size: 0.9rem; font-weight: 600;">← Назад в каталог</a>
+    </div>
+
+    <div class="wb-box" style="margin-bottom: 32px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 36px; align-items: start;">
+            
+            <!-- Галерея фото -->
+            <div>
+                <div style="position: relative; border-radius: 16px; overflow: hidden; background: #f5f5f8; aspect-ratio: 3 / 4; max-height: 480px; border: 1px solid #ececf2; margin-bottom: 12px;">
+                    {% if first_photo %}
+                        <img id="mainProductImg" src="{{ url_for('static', filename='uploads/' + first_photo) }}" style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.2s;">
+                        
+                        {% if photos|length > 1 %}
+                        <button type="button" onclick="changeSlide(-1)" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(37, 33, 51, 0.78); color: #ffffff; font-size: 1.2rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                            ‹
+                        </button>
+                        <button type="button" onclick="changeSlide(1)" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(37, 33, 51, 0.78); color: #ffffff; font-size: 1.2rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                            ›
+                        </button>
+                        <span id="photoCounter" style="position: absolute; bottom: 12px; right: 12px; background: rgba(37, 33, 51, 0.8); color: #d7f1e9; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 8px;">
+                            1 / {{ photos|length }}
+                        </span>
+                        {% endif %}
+                    {% else %}
+                        <div class="wb-no-photo" style="font-size: 1rem;">Фото не загружено</div>
+                    {% endif %}
+                </div>
+
+                {% if photos|length > 1 %}
+                <div id="thumbsRow" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;">
+                    {% for img in photos %}
+                        <img src="{{ url_for('static', filename='uploads/' + img) }}" 
+                             class="gallery-thumb"
+                             data-index="{{ loop.index0 }}"
+                             onclick="setSlide({{ loop.index0 }})"
+                             style="width: 68px; height: 84px; object-fit: cover; border-radius: 10px; cursor: pointer; border: 2px solid {{ '#3a8fbc' if loop.first else 'transparent' }}; opacity: {{ '1' if loop.first else '0.65' }}; transition: all 0.15s; flex-shrink: 0;">
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <!-- Описание, профиль продавца, панель админа и жалоба -->
+            <div style="min-width: 0;">
+                <span style="display: inline-block; background: #d7f1e9; color: #252133; font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 8px; margin-bottom: 12px;">
+                    {{ product.category }}
+                </span>
+
+                <h1 style="font-size: 1.65rem; font-weight: 800; color: #252133; margin-bottom: 14px; line-height: 1.25; word-break: break-word;">
+                    {{ product.title }}
+                </h1>
+
+                <a href="{{ url_for('seller_profile', seller_id=product.seller_id) }}" style="text-decoration: none; color: inherit; display: block; margin-bottom: 20px;">
+                    <div style="background: #f5f5f8; padding: 14px 18px; border-radius: 14px; border: 1px solid #e6e6ee; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                            {% if product.seller_avatar %}
+                                <img src="{{ url_for('static', filename='uploads/' + product.seller_avatar) }}" style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; object-fit: cover; border: 2px solid #91d3db;">
+                            {% else %}
+                                <div style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: #252133; color: #d7f1e9; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem;">
+                                    {{ (product.seller_name or 'П')|first|upper }}
+                                </div>
+                            {% endif %}
+                            <div style="overflow: hidden;">
+                                <div style="font-size: 0.76rem; color: #767686;">Продавец · <span style="color: #3a8fbc; font-weight: 600;">Перейти в профиль →</span></div>
+                                <div style="font-weight: 800; font-size: 1rem; color: #252133; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ product.seller_name }}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 800; font-size: 0.96rem; color: #3d517e;">
+                                {{ 'Рейтинг: ' + (avg_rating|string) + ' / 5' if avg_rating > 0 else 'Пока без оценок' }}
+                            </div>
+                            <div style="font-size: 0.78rem; color: #767686;">Всего отзывов: {{ reviews|length }}</div>
+                        </div>
+                    </div>
+                </a>
+
+                <div style="margin-bottom: 22px;">
+                    <span style="font-size: 2rem; font-weight: 800; color: #252133;">{{ "{:,.0f}".format(product.price).replace(',', ' ') }} ₽</span>
+                    <span style="font-size: 1rem; color: #767686;">/ {{ product.unit }}</span>
+                </div>
+
+                <!-- Кнопки действий / Панель модератора для админа -->
+                <div style="margin-bottom: 26px; max-width: 460px;">
+                    {% if session.role == 'admin' %}
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 14px; border-radius: 14px;">
+                            <div style="font-size: 0.78rem; font-weight: 800; color: #b91c1c; margin-bottom: 10px;">
+                                Панель модератора
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <a href="{{ url_for('edit_product', pid=product.ID_Products) }}" class="btn-wb-soft" style="width: auto; height: 38px; font-size: 0.84rem; padding: 0 14px;">
+                                    Редактировать
+                                </a>
+                                <a href="{{ url_for('delete_product', pid=product.ID_Products) }}" class="btn-wb-danger" style="height: 38px; font-size: 0.84rem; padding: 0 14px;">
+                                    Удалить товар
+                                </a>
+                                <form method="POST" action="{{ url_for('toggle_block', uid=product.seller_id) }}" style="margin: 0;">
+                                    <button type="submit" style="height: 38px; padding: 0 14px; border: none; border-radius: 10px; background: #252133; color: #ffffff; font-size: 0.84rem; font-weight: 700; cursor: pointer;">
+                                        Заблокировать продавца
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% elif session.user_id == product.seller_id %}
+                        <a href="{{ url_for('edit_product', pid=product.ID_Products) }}" class="btn-wb-soft" style="height: 46px; font-size: 0.95rem;">
+                            Редактировать объявление
+                        </a>
+                    {% elif session.role in ['buyer', 'both'] %}
+                        <a href="{{ url_for('start_chat', product_id=product.ID_Products) }}" class="btn-wb-primary" style="height: 46px; font-size: 0.95rem;">
+                            Написать продавцу
+                        </a>
+                    {% elif not session.user_id %}
+                        <a href="{{ url_for('login') }}" class="btn-wb-soft" style="height: 46px; font-size: 0.95rem;">
+                            Войти, чтобы купить
+                        </a>
+                    {% endif %}
+                </div>
+
+                <div style="border-top: 1px solid #ececf2; padding-top: 18px;">
+                    <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 8px;">Описание</h3>
+                    <p style="font-size: 0.92rem; color: #4a4a58; white-space: pre-line; line-height: 1.55; word-break: break-word;">
+                        {{ product.description if product.description else 'Продавец не добавил описание.' }}
+                    </p>
+                </div>
+
+                <!-- Форма жалобы на товар -->
+                {% if session.user_id and session.user_id != product.seller_id and session.role != 'admin' %}
+                <div style="margin-top: 22px; padding-top: 14px; border-top: 1px solid #ececf2;">
+                    <details>
+                        <summary style="font-size: 0.82rem; color: #b91c1c; font-weight: 600; cursor: pointer;">Пожаловаться на объявление</summary>
+                        <form method="POST" action="{{ url_for('report_product', pid=product.ID_Products) }}" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                            <input type="text" name="reason" class="wb-input" style="flex: 1; min-width: 200px; font-size: 0.85rem;" placeholder="Опишите нарушение (обман, запрещённый товар...)" required>
+                            <button type="submit" class="btn-wb-danger" style="height: 38px; padding: 0 16px;">Отправить жалобу</button>
+                        </form>
+                    </details>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="wb-box" style="margin-bottom: 36px;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px;">
+            <h3 style="font-size: 1.2rem; font-weight: 800; margin: 0;">
+                Отзывы о продавце {{ product.seller_name }} ({{ reviews|length }})
+            </h3>
+            <a href="{{ url_for('seller_profile', seller_id=product.seller_id) }}" style="color: #3a8fbc; font-size: 0.88rem; font-weight: 700; text-decoration: none;">
+                Все объявления и отзывы продавца →
+            </a>
+        </div>
+
+        {% if reviews %}
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                {% for r in reviews %}
+                <div style="background: #f5f5f8; padding: 16px 20px; border-radius: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <strong style="font-size: 0.92rem; color: #252133;">{{ r.buyer_name }}</strong>
+                        <span style="background: #91d3db; color: #252133; font-weight: 700; font-size: 0.8rem; padding: 3px 10px; border-radius: 6px;">
+                            Оценка: {{ r.rating }} из 5
+                        </span>
+                    </div>
+                    <div style="font-size: 0.78rem; color: #767686; margin-bottom: 8px;">
+                        Товар: {{ r.product_title }} · {{ r.created_at }}
+                    </div>
+                    <p style="font-size: 0.9rem; color: #252133; word-break: break-word; margin-bottom: {{ '10px' if r.review_image else '0' }};">{{ r.review_text }}</p>
+                    {% if r.review_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + r.review_image) }}" style="max-height: 150px; border-radius: 10px; border: 1px solid #e2e2ea;">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #767686; font-size: 0.9rem;">Отзывов пока нет.</p>
+        {% endif %}
+    </div>
+
+    {% if other_products %}
+    <div>
+        <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 18px;">Другие товары продавца {{ product.seller_name }}</h3>
+        <div class="wb-products-grid">
+            {% for op in other_products %}
+            {% set op_cover = op.image_filename|first_img %}
+            <a href="{{ url_for('product_detail', pid=op.ID_Products) }}" style="text-decoration: none; color: inherit;">
+                <div class="wb-product-card">
+                    <div class="wb-photo">
+                        {% if op_cover %}
+                            <img src="{{ url_for('static', filename='uploads/' + op_cover) }}" alt="{{ op.title }}">
+                        {% else %}
+                            <div class="wb-no-photo">Без фото</div>
+                        {% endif %}
+                        <span class="wb-badge-bottom">{{ op.category|sub_cat }}</span>
+                    </div>
+                    <div class="wb-price-row">
+                        <span class="wb-card-price">{{ "{:,.0f}".format(op.price).replace(',', ' ') }} ₽</span>
+                        <span class="wb-card-unit">/ {{ op.unit }}</span>
+                    </div>
+                    <div class="wb-card-title">{{ op.title }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    const photoUrls = [
+        {% for img in photos %}
+            "{{ url_for('static', filename='uploads/' + img) }}",
+        {% endfor %}
+    ];
+    let currentSlide = 0;
+
+    function setSlide(index) {
+        if (!photoUrls.length) return;
+        currentSlide = (index + photoUrls.length) % photoUrls.length;
+        const mainImg = document.getElementById('mainProductImg');
+        if (mainImg) mainImg.src = photoUrls[currentSlide];
+
+        const counter = document.getElementById('photoCounter');
+        if (counter) counter.textContent = `${currentSlide + 1} / ${photoUrls.length}`;
+
+        document.querySelectorAll('.gallery-thumb').forEach((thumb, idx) => {
+            thumb.style.borderColor = (idx === currentSlide) ? '#3a8fbc' : 'transparent';
+            thumb.style.opacity = (idx === currentSlide) ? '1' : '0.65';
+        });
+    }
+
+    function changeSlide(step) {
+        setSlide(currentSlide + step);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (photoUrls.length > 1) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        }
+    });
+</script>
+{% endblock %}
