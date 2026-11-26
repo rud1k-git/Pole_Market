@@ -1,0 +1,378 @@
+{
+  "_type": "Project",
+  "_id": "PRJ_POLE_MARKET_2026",
+  "name": "Pole Market",
+  "ownedElements": [
+    {
+      "_type": "UMLModel",
+      "_id": "MODEL_POLE_MARKET",
+      "name": "Pole Market Database",
+      "ownedElements": [
+        {
+          "_type": "UMLClass",
+          "_id": "CLS_USERS",
+          "name": "Users",
+          "attributes": [
+            {
+              "_type": "UMLAttribute",
+              "_id": "US1",
+              "name": "ID_Users: INTEGER [PK]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US2",
+              "name": "username: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US3",
+              "name": "password_hash: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US4",
+              "name": "role: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US5",
+              "name": "company_name: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US6",
+              "name": "email: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US7",
+              "name": "phone: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US8",
+              "name": "avatar: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "US9",
+              "name": "is_blocked: YESNO"
+            }
+          ]
+        },
+        {
+          "_type": "UMLClass",
+          "_id": "CLS_PRODUCTS",
+          "name": "Products",
+          "attributes": [
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR1",
+              "name": "ID_Products: INTEGER [PK]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR2",
+              "name": "seller_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR3",
+              "name": "title: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR4",
+              "name": "category: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR5",
+              "name": "price: CURRENCY"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR6",
+              "name": "unit: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR7",
+              "name": "description: LONGTEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "PR8",
+              "name": "image_filename: LONGTEXT"
+            }
+          ]
+        },
+        {
+          "_type": "UMLClass",
+          "_id": "CLS_CHATROOMS",
+          "name": "ChatRooms",
+          "attributes": [
+            {
+              "_type": "UMLAttribute",
+              "_id": "CH1",
+              "name": "ID_ChatRooms: INTEGER [PK]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "CH2",
+              "name": "buyer_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "CH3",
+              "name": "seller_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "CH4",
+              "name": "product_id: INTEGER [FK -> Products]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "CH5",
+              "name": "status: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "CH6",
+              "name": "buyer_confirmed: YESNO"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "CH7",
+              "name": "seller_confirmed: YESNO"
+            }
+          ]
+        },
+        {
+          "_type": "UMLClass",
+          "_id": "CLS_MESSAGES",
+          "name": "Messages",
+          "attributes": [
+            {
+              "_type": "UMLAttribute",
+              "_id": "ME1",
+              "name": "ID_Messages: INTEGER [PK]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "ME2",
+              "name": "room_id: INTEGER [FK -> ChatRooms]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "ME3",
+              "name": "sender_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "ME4",
+              "name": "message_text: LONGTEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "ME5",
+              "name": "created_at: TEXT"
+            }
+          ]
+        },
+        {
+          "_type": "UMLClass",
+          "_id": "CLS_REVIEWS",
+          "name": "Reviews",
+          "attributes": [
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE1",
+              "name": "ID_Reviews: INTEGER [PK]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE2",
+              "name": "room_id: INTEGER [FK -> ChatRooms]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE3",
+              "name": "product_id: INTEGER [FK -> Products]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE4",
+              "name": "seller_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE5",
+              "name": "buyer_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE6",
+              "name": "rating: INTEGER"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE7",
+              "name": "review_text: LONGTEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE8",
+              "name": "review_image: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE9",
+              "name": "created_at: TEXT"
+            }
+          ]
+        },
+        {
+          "_type": "UMLClass",
+          "_id": "CLS_REPORTS",
+          "name": "Reports",
+          "attributes": [
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE1",
+              "name": "ID_Reports: INTEGER [PK]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE2",
+              "name": "product_id: INTEGER [FK -> Products]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE3",
+              "name": "reporter_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE4",
+              "name": "reason: LONGTEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE5",
+              "name": "status: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "RE6",
+              "name": "created_at: TEXT"
+            }
+          ]
+        },
+        {
+          "_type": "UMLClass",
+          "_id": "CLS_SUPPORTTICKETS",
+          "name": "SupportTickets",
+          "attributes": [
+            {
+              "_type": "UMLAttribute",
+              "_id": "SU1",
+              "name": "ID_Tickets: INTEGER [PK]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "SU2",
+              "name": "user_id: INTEGER [FK -> Users]"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "SU3",
+              "name": "sender_role: TEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "SU4",
+              "name": "message_text: LONGTEXT"
+            },
+            {
+              "_type": "UMLAttribute",
+              "_id": "SU5",
+              "name": "created_at: TEXT"
+            }
+          ]
+        },
+        {
+          "_type": "UMLClassDiagram",
+          "_id": "DIAGRAM_DATABASE",
+          "name": "ER-модель базы данных",
+          "ownedViews": [
+            {
+              "_type": "UMLClassView",
+              "_id": "VIEW_USERS",
+              "model": "CLS_USERS",
+              "left": 40,
+              "top": 40,
+              "width": 280,
+              "height": 210
+            },
+            {
+              "_type": "UMLClassView",
+              "_id": "VIEW_PRODUCTS",
+              "model": "CLS_PRODUCTS",
+              "left": 370,
+              "top": 40,
+              "width": 280,
+              "height": 210
+            },
+            {
+              "_type": "UMLClassView",
+              "_id": "VIEW_CHATROOMS",
+              "model": "CLS_CHATROOMS",
+              "left": 700,
+              "top": 40,
+              "width": 280,
+              "height": 210
+            },
+            {
+              "_type": "UMLClassView",
+              "_id": "VIEW_MESSAGES",
+              "model": "CLS_MESSAGES",
+              "left": 40,
+              "top": 320,
+              "width": 280,
+              "height": 210
+            },
+            {
+              "_type": "UMLClassView",
+              "_id": "VIEW_REVIEWS",
+              "model": "CLS_REVIEWS",
+              "left": 370,
+              "top": 320,
+              "width": 280,
+              "height": 210
+            },
+            {
+              "_type": "UMLClassView",
+              "_id": "VIEW_REPORTS",
+              "model": "CLS_REPORTS",
+              "left": 700,
+              "top": 320,
+              "width": 280,
+              "height": 210
+            },
+            {
+              "_type": "UMLClassView",
+              "_id": "VIEW_SUPPORTTICKETS",
+              "model": "CLS_SUPPORTTICKETS",
+              "left": 40,
+              "top": 600,
+              "width": 280,
+              "height": 210
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
